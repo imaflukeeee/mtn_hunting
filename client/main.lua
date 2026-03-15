@@ -298,33 +298,61 @@ CreateThread(function()
         StartButchers()
     end
 
+    local isPromptActive = false -- [เพิ่ม] ตัวแปรคุมสถานะ mtn_prompt
+
     while true do
         local sleep = 1000
+        local playerCoords = GetEntityCoords(PlayerPedId())
+        
+        local nearButcher = false
+        local activeButcher = nil
+
         for i, v in ipairs(Config.Butchers) do
-            local playerCoords = GetEntityCoords(PlayerPedId())
             local distance = #(playerCoords - v.coords)
 
+            -- เช็คระยะห่างเข้าใกล้ Butcher (อิงจากรัศมี radius ใน Config)
             if distance <= v.radius then
                 sleep = 0
-                local label = CreateVarString(10, 'LITERAL_STRING', Config.Language.sell)
-                PromptSetActiveGroupThisFrame(prompts, label)
+                nearButcher = true
+                activeButcher = v
+                break -- เจอแล้วให้หยุดหาคนอื่นต่อ
+            end
+        end
 
-                if Citizen.InvokeNative(0xC92AC953F0A982AE, openButcher) then
-                    if not pressed then
-                        pressed = true
-                        if Config.joblocked then
-                            local result = Core.Callback.TriggerAwait("vorp_hunting:GetPlayerJob", args)
-                            local playerJob = result
-                            if playerJob == v.butcherjob then
-                                SellAnimal()
-                            else
-                                ShowNotify(Config.Language.notabutcher .. " : " .. v.butcherjob)
-                            end
-                        else
+        -- [NEW] จัดการระบบแสดงผล mtn_prompt และการกดปุ่ม G
+        if nearButcher then
+            if not isPromptActive then
+                exports.mtn_prompt:show("G", "เพื่อขายซากสัตว์") -- แก้ไขข้อความได้ที่นี่
+                isPromptActive = true
+            end
+
+            -- ตรวจจับการกดปุ่ม G
+            if IsControlJustPressed(0, Config.keys["G"]) then
+                if not pressed then
+                    pressed = true
+                    
+                    -- ซ่อน Prompt ชั่วคราวเมื่อกดขาย
+                    exports.mtn_prompt:hide()
+                    isPromptActive = false
+
+                    if Config.joblocked then
+                        local result = Core.Callback.TriggerAwait("vorp_hunting:GetPlayerJob", args)
+                        local playerJob = result
+                        if playerJob == activeButcher.butcherjob then
                             SellAnimal()
+                        else
+                            ShowNotify(Config.Language.notabutcher .. " : " .. activeButcher.butcherjob)
                         end
+                    else
+                        SellAnimal()
                     end
                 end
+            end
+        else
+            -- ถ้าเดินออกจากระยะคนขายเนื้อ ให้ซ่อน Prompt
+            if isPromptActive then
+                exports.mtn_prompt:hide()
+                isPromptActive = false
             end
         end
 
