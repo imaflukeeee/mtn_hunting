@@ -136,17 +136,6 @@ Config.Butchers = {
         butcherped = true
     },
     {
-        butchername = "Landing Butcher",
-        butcherjob = "butcher",
-        blip = 1369919445,
-        npcmodel = "CS_MP_SHAKY",
-        coords = vector3(-1435.61, -2330.28, 43.66),
-        heading = 1.15,
-        radius = 4.0,
-        showblip = true,
-        butcherped = true
-    },
-    {
         butchername = "Saint Denis Butcher",
         butcherjob = "butcher",
         blip = 1369919445,
