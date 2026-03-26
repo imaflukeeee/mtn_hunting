@@ -104,12 +104,18 @@ local function giveReward(context, data, skipfinal)
             Character.addXp(xp)
         end
 
-        local Webhook = ""  -- Set your webhook URL here
-
-
         if #monies > 0 then
-            VorpCore.AddWebhook("Hunting", Webhook,
-                GetPlayerName(_source) .. " " .. "player received" .. table.concat(monies, ", "), nil, nil, nil, nil, nil)
+            -- [Azael Log: ล่าสัตว์ (ได้รับเงิน)]
+            local actionType = (context == "skinned") and "แล่เนื้อ/ถอนขนสัตว์" or "ขายซาก/หนังให้คนขายเนื้อ"
+            local animalName = animal and animal.name or "Unknown Animal"
+            local charName = Character.firstname .. ' ' .. Character.lastname
+            
+            TriggerEvent('azael_dc-serverlogs:insertData', {
+                event = 'VORPHunt_Money',
+                content = ('### 🦌 %s (ได้รับเงิน)\n> **ผู้เล่น:** `%s`\n> **สัตว์เป้าหมาย:** `%s`\n> **ได้รับ:** `%s`'):format(actionType, charName, animalName, table.concat(monies, ", ")),
+                source = _source,
+                options = { public = false, codeblock = false }
+            })
             
             -- [MODIFIED] แจ้งเตือนเวลาขายของได้เงิน
             TriggerClientEvent("mtn_notify:send", _source, { 
@@ -201,7 +207,17 @@ local function giveReward(context, data, skipfinal)
             end
 
             if givenMsg ~= "" and #formattedGivenItems > 0 then
-                VorpCore.AddWebhook("Hunting", Webhook, GetPlayerName(_source) .. " player received: " .. givenMsg)
+                -- [Azael Log: ล่าสัตว์ (ได้รับไอเทม)]
+                local actionType = (context == "skinned") and "แล่เนื้อ/ถอนขนสัตว์" or "เก็บชิ้นส่วน"
+                local animalName = animal and animal.name or "Unknown Animal"
+                local charName = Character.firstname .. ' ' .. Character.lastname
+                
+                TriggerEvent('azael_dc-serverlogs:insertData', {
+                    event = 'VORPHunt_Item',
+                    content = ('### 🥩 %s (ได้รับชิ้นส่วน)\n> **ผู้เล่น:** `%s`\n> **สัตว์เป้าหมาย:** `%s`\n> **ได้รับไอเทม:** `%s`'):format(actionType, charName, animalName, givenMsg),
+                    source = _source,
+                    options = { public = false, codeblock = false }
+                })
             end
         end
     end
