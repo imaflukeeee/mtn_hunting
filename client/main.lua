@@ -76,10 +76,17 @@ local function awardQuality(quality, entity, horse, cb)
     end
 
     if skinFound then
+        -- [Security Fix] ดึงค่า netid เพื่อส่งไปให้ Server บันทึกป้องกันการปั๊มของ
+        local netid = nil
+        if entity and DoesEntityExist(entity) and NetworkGetEntityIsNetworked(entity) then
+            netid = NetworkGetNetworkIdFromEntity(entity)
+        end
+
         TriggerServerEvent("vorp_hunting:giveReward", "pelt", {
             model = skinFound,
             quality = quality,
             entity = entity,
+            netid = netid, -- ส่ง netid ไปด้วย
             horse = horse
         }, false)
         cb()
@@ -265,6 +272,13 @@ CreateThread(function()
                             if eventDataStruct:GetInt32(16) == 1 then
                                 local model = GetEntityModel(pedid)
                                 if model and Config.SkinnableAnimals[model] then
+                                    
+                                    -- [Security Fix] ดึง netid ของสัตว์ที่ถูกแล่ ส่งให้ Server เช็คระยะและป้องกันปั๊มของ
+                                    local netid = nil
+                                    if pedid and DoesEntityExist(pedid) and NetworkGetEntityIsNetworked(pedid) then
+                                        netid = NetworkGetNetworkIdFromEntity(pedid)
+                                    end
+
                                     if Config.SkinnableAnimals[model].deletePelt then
                                         Wait(1000)
                                         local holding = Citizen.InvokeNative(0xD806CD2A4F2C2996, PlayerPedId())
@@ -278,7 +292,8 @@ CreateThread(function()
                                             DeleteEntity(holding)
                                         end
                                     end
-                                    TriggerServerEvent("vorp_hunting:giveReward", "skinned", { model = model }, true)
+                                    -- [Security Fix] เพิ่ม netid และ entity เข้าไปใน Payload
+                                    TriggerServerEvent("vorp_hunting:giveReward", "skinned", { model = model, netid = netid, entity = pedid }, true)
                                 end
                             end
                         end
